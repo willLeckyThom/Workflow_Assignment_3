@@ -10,7 +10,7 @@ services:
   airflow:
     build: .
     container_name: airflow
-    command: standalone            # i.e. `airflow standalone`
+    command: standalone
     ports:
       - "8080:8080"
     environment:
