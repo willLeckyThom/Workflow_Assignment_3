@@ -139,7 +139,7 @@ def ask_llm(markdown: str) -> dict:
             model=LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
-            response_format={"type": "json_object"},  # drop this line if your server rejects it
+            response_format={"type": "json_object"},
         )
         return validate(json.loads(resp.choices[0].message.content))
     except (json.JSONDecodeError, ValueError) as err:
