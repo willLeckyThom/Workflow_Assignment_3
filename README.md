@@ -7,17 +7,6 @@ converted to Markdown, described by a locally served LLM, saved to SQLite, added
 
 Nothing is sent to a cloud AI service: the model runs on your own machine.
 
-## What it does
-
-1. Runs Airflow locally with `airflow standalone`, inside a Docker container.
-2. Watches a Google Drive-synced `papers/` folder for new PDFs.
-3. Converts each PDF to Markdown with PyMuPDF4LLM.
-4. Asks a local LLM (Ollama) for a title, summary, keywords and category as JSON.
-5. Parses and validates the JSON.
-6. Saves the metadata to a SQLite database that lives outside the synced folder.
-7. Regenerates a static `index.html` with text search and category filtering.
-8. Sends a Discord webhook message for each newly processed paper.
-
 ## Folder layout
 
 ```
@@ -39,6 +28,14 @@ Google Drive/ResearchLibrary/   # synced by Google Drive for Desktop
 - Windows 11 with Docker Desktop (WSL 2 backend, the default)
 - Google Drive for Desktop set to Mirror files (not Stream), so PDFs are real files on disk
 - A Discord webhook URL.
+
+## Create Google Drive folder
+
+- Download and install `.exe` from this url: https://support.google.com/drive/answer/10838124?hl=en#zippy=%2Cinstall-on-windows
+- Click on Settings
+- Select Preferences
+- Click Add Folder
+- Choose Sync with Google Drive
 
 ## Setup
 
