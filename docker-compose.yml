@@ -1,0 +1,38 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+  airflow:
+    build: .
+    container_name: airflow
+    command: standalone            # i.e. `airflow standalone`
+    ports:
+      - "8080:8080"
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS: "True"
+      RESEARCH_LIBRARY: /library
+      PAPER_DB: /data/papers.db
+      LLM_BASE_URL: http://ollama:11434/v1
+      LLM_MODEL: ${LLM_MODEL:-llama3.1}
+      DISCORD_WEBHOOK_URL: ${DISCORD_WEBHOOK_URL:-}
+    volumes:
+      - airflow_home:/opt/airflow            
+      - ./dags:/opt/airflow/dags             
+      - type: bind                           
+        source: ${LIBRARY_PATH}
+        target: /library
+      - paper_data:/data                     
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+volumes:
+  ollama_models:
+  airflow_home:
+  paper_data:
