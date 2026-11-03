@@ -114,7 +114,6 @@ def validate(meta: dict) -> dict:
         raise ValueError("Missing or invalid field: keywords")
     return meta
 
-
 def ask_llm(markdown: str) -> dict:
     """Ask the local LLM for paper metadata and return it as a validated dict.
 
@@ -129,22 +128,25 @@ def ask_llm(markdown: str) -> dict:
     Raises:
         RuntimeError: If both attempts returned invalid JSON or failed validation.
     """
-    from openai import OpenAI  # imported here so DAG parsing stays fast
+    from openai import OpenAI
 
     client = OpenAI(base_url=LLM_BASE_URL, api_key="local-not-needed")
     prompt = PROMPT.format(markdown=markdown[:MAX_MARKDOWN_CHARS])
     last_err = None
-    try:
-        resp = client.chat.completions.create(
-            model=LLM_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            response_format={"type": "json_object"},
-        )
-        return validate(json.loads(resp.choices[0].message.content))
-    except (json.JSONDecodeError, ValueError) as err:
-        last_err = err
-        print(f"Failed to parse LLM output: {err}")
+
+    for attempt in range(2):
+        try:
+            resp = client.chat.completions.create(
+                model=LLM_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.2,
+                response_format={"type": "json_object"},
+            )
+            return validate(json.loads(resp.choices[0].message.content))
+        except (json.JSONDecodeError, ValueError) as err:
+            last_err = err
+            print(f"Attempt {attempt + 1} failed: {err}")
+
     raise RuntimeError(f"LLM did not return valid JSON after retry: {last_err}")
 
 
