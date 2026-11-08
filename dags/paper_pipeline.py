@@ -256,7 +256,6 @@ def paper_pipeline():
     Flow: find_new_pdfs -> process_paper (one task per PDF) -> regenerate_html -> notify_discord.
     Calling this function only DESCRIBES the task graph; Airflow runs the tasks later.
     """
-
     @task
     def find_new_pdfs() -> list[str]:
         """Find PDFs in ``papers/`` that are not yet in the database.
@@ -275,6 +274,15 @@ def paper_pipeline():
         new = sorted(p.name for p in PAPERS_DIR.glob("*.pdf") if p.name not in known)
         print(f"Found {len(new)} new PDF(s): {new}")
         return new
+    
+    @task.short_circuit
+    def has_new_pdfs(new_files: list[str]) -> bool:
+        if not new_files:
+            print("No new PDFs found. Skipping the entire pipeline.")
+            return False
+
+        print(f"{len(new_files)} new PDF(s) found. Starting processing.")
+        return True
 
     @task(max_active_tis_per_dag=1)
     def process_paper(filename: str) -> dict:
@@ -347,9 +355,13 @@ def paper_pipeline():
             ).raise_for_status()
 
     new_files = find_new_pdfs()
+    check = has_new_pdfs(new_files)
+
     processed = process_paper.expand(filename=new_files)
     html_done = regenerate_html()
     notified = notify_discord(processed)
+
+    check >> processed
     processed >> html_done >> notified
 
 
